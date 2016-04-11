@@ -1,15 +1,41 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Krawlly
 {
+    [DataContract]
+    internal class LoginTicket
+    {
+        public LoginTicket(string userName, int minutes) : this(userName, getValidThrough(minutes))
+        {
+        }
+
+        public LoginTicket(string userName, DateTime validThrough)
+        {
+            this.userName = userName;
+            long unixTimestamp = (long)(validThrough.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local))).TotalSeconds;
+            this.validThrough = 1000L * unixTimestamp;
+        }
+
+        private static DateTime getValidThrough(int minutes)
+        {
+            DateTime dt = DateTime.Now;
+            dt.AddMinutes(minutes);
+            return dt;
+        }
+
+        [DataMember]
+        internal string userName;
+
+        [DataMember]
+        internal long validThrough;
+    }
+
     public sealed class TicketFactory
     {
         private readonly RSACryptoServiceProvider rsaEncryptor;
